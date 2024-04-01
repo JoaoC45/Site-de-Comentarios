@@ -1,16 +1,19 @@
 <template>
-    <div id="app">
-        <div class="comments-container">
-            <h1>Comentários</h1>
-            <div class="comment" v-for="comment in comments" :key="comment.id">
-                <img :src="comment.userImageUrl" alt="User image" class="user-image">
-                <div class="comment-content">
-                    <h3>{{ comment.userName }}</h3>
-                    <p class="comment-text">{{ comment.text }}</p>
-                    <div class="comment-details">
-                        <Vue3StarRatings :rating="comment.rating" :star-size="25" :read-only="true" />
-                        <span class="comment-date">{{ formatDate(comment.date) }}</span>
-                    </div>
+    <div class="comments-container">
+        <h1>Comentários</h1>
+        <div v-if="averageRating > 0" class="average-rating">
+            <Vue3StarRatings :rating="averageRating" :star-size="20" :read-only="true" />
+            <span>({{ averageRating.toFixed(1) }} de 5)</span>
+        </div>
+        <div v-if="loading" class="loading">Carregando...</div>
+        <div v-else class="comment" v-for="comment in commentsWithImages" :key="comment.id">
+            <img :src="comment.userImageUrl || defaultImage" alt="User image" class="user-image">
+            <div class="comment-content">
+                <h3>{{ comment.userName }}</h3>
+                <p class="comment-text">{{ comment.comment }}</p>
+                <div class="comment-details">
+                    <Vue3StarRatings :rating="comment.rating" :star-size="20" :read-only="true" />
+                    <span class="comment-date">{{ formatDate(comment.timestamp) }}</span>
                 </div>
             </div>
         </div>
@@ -18,29 +21,63 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { db } from '@/services/firebase-config'; // Ajuste o caminho se necessário
+import { ref, computed, onMounted } from 'vue';
+import { db } from '@/services/firebase-config';
 import { ref as dbRef, get } from 'firebase/database';
+import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
 import Vue3StarRatings from 'vue3-star-ratings';
 
-const comments = ref([]);
+const defaultImage = new URL('@/assets/Solo Leveling.png', import.meta.url).href;
+const commentsWithImages = ref([]);
+const loading = ref(true);
+
+const loadImages = async (commentsData) => {
+    const storage = getStorage();
+    return Promise.all(commentsData.map(async (comment) => {
+        if (comment.userId) {
+            const imagePath = `profilePhotos/${comment.userId}`;
+            const imageRef = storageRef(storage, imagePath);
+            try {
+                comment.userImageUrl = await getDownloadURL(imageRef);
+            } catch (error) {
+                comment.userImageUrl = defaultImage;
+            }
+        } else {
+            comment.userImageUrl = defaultImage;
+        }
+        return comment;
+    }));
+};
 
 onMounted(async () => {
     const commentsRef = dbRef(db, 'comments');
-    const snapshot = await get(commentsRef);
-    if (snapshot.exists()) {
-        comments.value = Object.values(snapshot.val());
-    } else {
-        console.log('No data available');
+    loading.value = true;
+
+    try {
+        const snapshot = await get(commentsRef);
+        if (snapshot.exists()) {
+            const commentsData = Object.values(snapshot.val());
+            commentsWithImages.value = await loadImages(commentsData);
+        } else {
+            console.log('No data available');
+        }
+    } catch (error) {
+        console.error("Error fetching comments:", error);
+    } finally {
+        loading.value = false;
     }
+});
+
+const averageRating = computed(() => {
+    const sum = commentsWithImages.value.reduce((acc, comment) => acc + comment.rating, 0);
+    return commentsWithImages.value.length ? sum / commentsWithImages.value.length : 0;
 });
 
 const formatDate = (timestamp) => {
     const date = new Date(timestamp);
-    if (isNaN(date.getTime())) {
-        return 'Data inválida';
-    }
-    return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
+    return !isNaN(date.getTime())
+        ? `${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR')}`
+        : 'Data inválida';
 };
 </script>
 
@@ -98,10 +135,11 @@ const formatDate = (timestamp) => {
     font-size: 1em;
 }
 
-
 .vue3-star-ratings .star {
     cursor: pointer;
     transition: color 0.2s;
+    width: 20px;
+    height: 20px;
 }
 
 .vue3-star-ratings .star:not(.active) {
@@ -110,5 +148,16 @@ const formatDate = (timestamp) => {
 
 .vue3-star-ratings .star.active {
     color: #ffd700;
+}
+
+.average-rating {
+    font-size: 1rem;
+    color: #ffd700;
+    margin-bottom: 20px;
+}
+
+.loading {
+    font-size: 1rem;
+    color: #666;
 }
 </style>
