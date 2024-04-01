@@ -13,33 +13,36 @@
 
 <script setup>
 import { ref } from 'vue';
-import { auth, db } from '@/services/firebase-config'; // Ajuste o caminho se necessário
-import { push, ref as dbRef, set } from 'firebase/database';
+import { auth, db } from '@/services/firebase-config';
+import { push, ref as dbRef } from 'firebase/database';
 
 const commentText = ref('');
-const rating = ref(0);
+const rating = ref(1); // Valor inicial válido
 
 const addComment = async () => {
     if (!auth.currentUser) {
-        alert('Usuário não autenticado!');
+        alert('Por favor, faça login para adicionar um comentário.');
         return;
     }
-    if (!commentText.value.trim() || rating.value <= 0 || rating.value > 5) {
+    if (!commentText.value.trim() || rating.value < 1 || rating.value > 5) {
         alert("Por favor preencha todos os campos corretamente!");
         return;
     }
-    const commentRef = dbRef(db, 'comments');
-    const newCommentRef = push(commentRef);
-    await set(newCommentRef, {
-        user: auth.currentUser.uid,
-        comment: commentText.value,
-        rating: rating.value,
-        timestamp: Date.now()
-    });
-    alert('Comentário adicionado com sucesso!');
-    // Reset fields after successful submission
-    commentText.value = '';
-    rating.value = 1; // Reset rating to default value
+    try {
+        const newComment = {
+            userId: auth.currentUser.uid,
+            text: commentText.value,
+            rating: rating.value,
+            timestamp: Date.now()
+        };
+        await push(dbRef(db, 'comments'), newComment);
+        alert('Comentário adicionado com sucesso!');
+        commentText.value = '';
+        rating.value = 1;
+    } catch (error) {
+        console.error('Erro ao adicionar comentário:', error);
+        alert('Houve um problema ao adicionar o comentário, tente novamente.');
+    }
 };
 </script>
 
@@ -57,6 +60,7 @@ const addComment = async () => {
 
 input {
     width: 100%;
+    padding: 8px;
     margin-top: 5px;
     border-radius: 5px;
     border: 1px solid #ccc;
