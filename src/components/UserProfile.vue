@@ -13,7 +13,7 @@ import { auth, db } from '@/services/firebase-config';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const userEmail = ref('');
-const userPhotoUrl = ref(''); // Corrigido o nome da variável
+const userPhotoUrl = ref('');
 
 onMounted(() => {
     if (auth.currentUser) {
@@ -24,26 +24,26 @@ onMounted(() => {
 
 const onFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) { // Verifica se um arquivo foi selecionado
+    if (file) {
         await uploadProfilePhoto(file);
     }
 };
 
 const loadProfilePhoto = async () => {
-    const photoPath = `profilePhotos/${auth.currentUser.uid}`; // Corrigido para usar backticks
+    const photoPath = `profilePhotos/${auth.currentUser.uid}`;
     const storage = getStorage();
     try {
         const url = await getDownloadURL(storageRef(storage, photoPath));
         userPhotoUrl.value = url;
     } catch (error) {
         console.log('Foto de perfil não encontrada', error);
-        userPhotoUrl.value = ''; // Opção para resetar ou definir uma imagem padrão
+        userPhotoUrl.value = '';
     }
 };
 
 const uploadProfilePhoto = async (file) => {
     const storage = getStorage();
-    const storageReference = storageRef(storage, `profilePhotos/${auth.currentUser.uid}`); // Corrigido para usar backticks
+    const storageReference = storageRef(storage, `profilePhotos/${auth.currentUser.uid}`);
 
     try {
         await uploadBytes(storageReference, file);

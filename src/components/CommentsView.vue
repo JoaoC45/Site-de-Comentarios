@@ -2,7 +2,8 @@
     <div class="comments-container">
         <h1>Comentários</h1>
         <div v-if="averageRating > 0" class="average-rating">
-            <Vue3StarRatings :rating="averageRating" :star-size="20" :read-only="true" />
+            <Vue3StarRatings :rating="averageRating" :star-size="20" :read-only="true" star-color="#ff9800"
+                inactive-color="#333333" />
             <span>({{ averageRating.toFixed(1) }} de 5)</span>
         </div>
         <div v-if="loading" class="loading">Carregando...</div>
@@ -19,7 +20,6 @@
         </div>
     </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { db } from '@/services/firebase-config';
@@ -159,5 +159,18 @@ const formatDate = (timestamp) => {
 .loading {
     font-size: 1rem;
     color: #666;
+}
+
+@media (max-width: 400px) {
+
+    .side,
+    .middle {
+        width: 100%;
+    }
+
+    /* Hide the right column on small screens */
+    .right {
+        display: none;
+    }
 }
 </style>
