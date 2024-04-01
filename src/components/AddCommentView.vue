@@ -13,9 +13,8 @@
 
 <script setup>
 import { ref } from 'vue';
-import { auth, db } from '../services/firebase-config';
-import { push, set, ref as dbRef } from "firebase/database";
-
+import { auth, db } from '@/services/firebase-config'; // Ajuste o caminho se necessário
+import { push, ref as dbRef, set } from 'firebase/database';
 
 const commentText = ref('');
 const rating = ref(0);
@@ -38,18 +37,18 @@ const addComment = async () => {
         timestamp: Date.now()
     });
     alert('Comentário adicionado com sucesso!');
+    // Reset fields after successful submission
     commentText.value = '';
-    rating.value = 0;
+    rating.value = 1; // Reset rating to default value
 };
 </script>
 
 <style scoped>
-
 .comment-form {
     max-width: 500px;
     margin: auto;
     padding: 20px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .input-group {
@@ -76,5 +75,4 @@ button {
 button:hover {
     background-color: #45a049;
 }
-
 </style>

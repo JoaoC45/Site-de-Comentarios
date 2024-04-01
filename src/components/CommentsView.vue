@@ -1,14 +1,16 @@
 <template>
-    <div class="comments-container">
-        <h1>Comentários</h1>
-        <div class="comment" v-for="comment in comments" :key="comment.id">
-            <img :src="comment.userImageUrl" alt="User image" class="user-image">
-            <div class="comment-content">
-                <h3>{{ comment.userName }}</h3>
-                <p class="comment-text">{{ comment.text }}</p>
-                <div class="comment-details">
-                    <Vue3StarRatings :rating="comment.rating" />
-                    <span class="comment-date">{{ formatDate(comment.date) }}</span>
+    <div id="app">
+        <div class="comments-container">
+            <h1>Comentários</h1>
+            <div class="comment" v-for="comment in comments" :key="comment.id">
+                <img :src="comment.userImageUrl" alt="User image" class="user-image">
+                <div class="comment-content">
+                    <h3>{{ comment.userName }}</h3>
+                    <p class="comment-text">{{ comment.text }}</p>
+                    <div class="comment-details">
+                        <Vue3StarRatings :rating="comment.rating" :star-size="25" :read-only="true" />
+                        <span class="comment-date">{{ formatDate(comment.date) }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -35,8 +37,7 @@ onMounted(async () => {
 
 const formatDate = (timestamp) => {
     const date = new Date(timestamp);
-    // Verifique se a data é válida antes de tentar formatá-la
-    if (isNaN(date)) {
+    if (isNaN(date.getTime())) {
         return 'Data inválida';
     }
     return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');

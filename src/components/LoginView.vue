@@ -26,6 +26,7 @@ const login = async () => {
     try {
         await signInWithEmailAndPassword(auth, email.value, password.value);
         alert('Logged in successfully!');
+        router.push({ name: 'comments' });
     } catch (error) {
         alert(error.message); 
     }
