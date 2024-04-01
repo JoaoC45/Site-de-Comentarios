@@ -2,8 +2,8 @@
     <div class="user-profile">
         <h2>Perfil do Usuário</h2>
         <p>Email: {{ userEmail }}</p>
-        <img src="usaerPhotoUrl" alt="Foto de perfil " class="profile-photo" />
-        <input type="file" @change="onFileChange" accept="imag/*">
+        <img :src="userPhotoUrl" alt="Foto de perfil" class="profile-photo" />
+        <input type="file" @change="onFileChange" accept="image/*">
     </div>
 </template>
 
@@ -11,10 +11,9 @@
 import { ref, onMounted } from 'vue';
 import { auth, db } from '@/services/firebase-config';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { updateProfile } from 'firebase/auth';
 
 const userEmail = ref('');
-const usaerPhotoUrl = ref('');
+const userPhotoUrl = ref(''); // Corrigido o nome da variável
 
 onMounted(() => {
     if (auth.currentUser) {
@@ -25,28 +24,31 @@ onMounted(() => {
 
 const onFileChange = async (e) => {
     const file = e.target.files[0];
-    uploadProfilePhoto(file);
+    if (file) { // Verifica se um arquivo foi selecionado
+        await uploadProfilePhoto(file);
+    }
 };
 
-const loadProfilePhoto = () => {
-    const photoPath = ' profilePhoto/${auth.currentUser.uid}';
+const loadProfilePhoto = async () => {
+    const photoPath = `profilePhotos/${auth.currentUser.uid}`; // Corrigido para usar backticks
     const storage = getStorage();
-    getDownloadURL(storageRef(storage, photoPath))
-        .then((url) => {
-            usaerPhotoUrl.value = url;
-        }).catch((error) => {
-            console.log('Foto de perfil não encontrada', error);
-        });
+    try {
+        const url = await getDownloadURL(storageRef(storage, photoPath));
+        userPhotoUrl.value = url;
+    } catch (error) {
+        console.log('Foto de perfil não encontrada', error);
+        userPhotoUrl.value = ''; // Opção para resetar ou definir uma imagem padrão
+    }
 };
 
 const uploadProfilePhoto = async (file) => {
     const storage = getStorage();
-    const storageReference = storageRef(storage, 'profilePhotos/${auth.currentUser.uid}');
+    const storageReference = storageRef(storage, `profilePhotos/${auth.currentUser.uid}`); // Corrigido para usar backticks
 
     try {
         await uploadBytes(storageReference, file);
         console.log('Foto de perfil atualizada com sucesso');
-        loadProfilePhoto();
+        await loadProfilePhoto();
     } catch (error) {
         console.error('Erro ao fazer upload da foto de perfil:', error);
     }

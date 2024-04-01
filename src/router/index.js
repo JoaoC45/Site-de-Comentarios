@@ -29,7 +29,7 @@ const routes = [
     component: AddCommentView,
   },
   {
-    path: '/profile',
+    path: '/UserProfile',
     name: 'UserProfile',
     component: UserProfile,
     meta: { requiresAuth: true }
